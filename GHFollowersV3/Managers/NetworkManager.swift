@@ -10,26 +10,26 @@ class NetworkManager {
     func fetchFollowers(
         for userName: String,
         page: Int,
-        completed: @escaping ([Follower]?, String?) -> Void
+        completed: @escaping (Result<[Follower], GFError>) -> Void
     ) {
         let endpoint =
             "\(baseUrl)\(userName)/followers?/per_page=100&page=\(page)"
 
         guard let url = URL(string: endpoint) else {
             completed(
-                nil,
-                "This username created an invalid request. Please try again later"
+                .failure(.invalidUserName)
             )
             return
         }
 
         let task = URLSession.shared.dataTask(with: url) {
             (data, response, error) in
-            print(error.flatMap(\.localizedDescription) ?? "No error")
+
             if error != nil {
                 completed(
-                    nil,
-                    error?.localizedDescription
+                    .failure(
+                        .unableToComplete
+                    )
                 )
                 return
             }
@@ -37,21 +37,21 @@ class NetworkManager {
             guard let response = response as? HTTPURLResponse,
                 response.statusCode == 200
             else {
-                completed(nil, error?.localizedDescription)
+                completed(.failure(.invalidResponse))
                 return
             }
 
             guard let data = data else {
-                completed(nil, error?.localizedDescription)
+                completed(.failure(.invalidData))
                 return
             }
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let followers = try decoder.decode([Follower].self, from: data)
-                completed(followers, nil)
+                completed(.success(followers))
             } catch {
-                completed(nil, error.localizedDescription)
+                completed(.failure(.invalidData))
             }
 
         }
