@@ -1,13 +1,6 @@
-//
-//  Follower.swift
-//  GHFollowers
-//
-//  Created by Владилсав on 20/2/26.
-//
-
 import Foundation
 
-struct Follower: Codable, Hashable {
+nonisolated struct Follower: Codable, Hashable, Sendable {
     var login: String
     var avatarUrl: String
 
